@@ -1,21 +1,39 @@
 <template>
-    <div>
-        <LoadPDF @loaded="onPdfLoad"/>
+    <div class="container mx-auto px-2 sm:px-4 py-6 flex flex-col gap-4">
+        <div>
+            <LoadPDF @loaded="onPdfLoad"/>
+        </div>
+        <div v-if="pdf_data && !pdf_pages">
+            <ProgressSpinner/>
+        </div>
+        <div v-else-if="pdf_pages">
+            <ClientOnly>
+            <PdfView :pdf-pages="pdf_pages"/>
+            </ClientOnly>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
 
+const pdf_data = ref<Uint8Array | null>(null);
 const pdf_pages = ref<PDFPages | null>(null);
 const dpi = ref(300)
+
+watch([pdf_data, dpi], async ([data, dpi]) => {
+    if (data && data.length > 0) {
+        pdf_pages.value = null; // Reset pages before loading new ones
+        pdf_pages.value = await convertPdfToImages(data, dpi);
+    } else {
+        pdf_pages.value = null;
+    }
+});
 
 const onPdfLoad = async (data: Uint8Array) => {
     if (!data || data.length === 0) {
         return null;
     }
-    const result = await convertPdfToImages(data, dpi.value);
-    console.log("PDF Pages loaded:", result.length);
-    pdf_pages.value = result;
+    pdf_data.value = data;
 };
 
 </script>

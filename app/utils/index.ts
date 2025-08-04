@@ -1,14 +1,14 @@
 // Tamanho A4 padrão em pontos
+import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?worker&url'
 const A4_WIDTH = 595;
 const A4_HEIGHT = 842;
 
-export type PDFPages = Uint8Array[];
-import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?worker&url'
+export type PDFPages = string[];
 
 /**
  * Converte um PDF (em buffer) em imagens PNG (Uint8Array), renderizadas com a resolução desejada.
  */
-export async function convertPdfToImages(pdfBuffer: Uint8Array, dpi: number = 300): Promise<Uint8Array[]> {
+export async function convertPdfToImages(pdfBuffer: Uint8Array, dpi: number = 300): Promise<PDFPages> {
   if (!import.meta.client) {
     return [];
   }
@@ -16,7 +16,7 @@ export async function convertPdfToImages(pdfBuffer: Uint8Array, dpi: number = 30
   const pdfjsLib = await import('pdfjs-dist');
   pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
-  const images: Uint8Array[] = [];
+  const images: PDFPages = [];
 
   // Calcula o fator de escala baseado no DPI desejado (PDF padrão é 72 DPI)
   const scale = dpi / 72;
@@ -37,9 +37,10 @@ export async function convertPdfToImages(pdfBuffer: Uint8Array, dpi: number = 30
     await page.render({ canvasContext: context, viewport, canvas }).promise;
 
     // Converte canvas para blob e depois para Uint8Array
-    const blob: Blob = await new Promise(resolve => canvas.toBlob(blob => resolve(blob!), 'image/png')!);
-    const arrayBuffer = await blob.arrayBuffer();
-    images.push(new Uint8Array(arrayBuffer));
+    const dataURL: string = canvas.toDataURL('image/png');
+    images.push(dataURL);
+    // Por fim, libera o canvas
+    canvas.remove();
   }
 
   return images;

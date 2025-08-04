@@ -13,6 +13,7 @@
     "@nuxt/icon": "1.15.0",
     "@primeuix/themes": "^1.2.3",
     "@tailwindcss/vite": "^4.1.11",
+    "@vueuse/core": "^13.6.0",
     "nuxt": "^4.0.1",
     "pdfjs-dist": "^5.4.54",
     "primelocale": "^2.1.5",
