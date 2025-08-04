@@ -3,11 +3,16 @@
 {
 	"name": "Node.js & TypeScript",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+	"build": {
+  		"dockerfile": "Dockerfile"
+	},
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"Vue.volar"
+				"Vue.volar",
+				"esbenp.prettier-vscode",
+				"sdras.vue-vscode-snippets",
+				"bradlc.vscode-tailwindcss"
 			]
 		}
 	}
