@@ -8,6 +8,7 @@
             <div v-if="croppedItem" class="flex flex-col items-center gap-4">
                 <img :src="croppedItem.image" alt="Cropped Image" />
                 <img :src="croppedItem.textImage" alt="Cropped Text Image" />
+                <span class="text-xl font-extrabold">{{ text }}</span>
             </div>
         </div>
     </div>
@@ -29,6 +30,7 @@ import type { PageState } from 'primevue';
         return 0;
     });
     const item = ref(0);
+    const text = ref('');
 
     const onItemChange = (event: PageState) => {
         item.value = event.page;
@@ -60,8 +62,15 @@ import type { PageState } from 'primevue';
                 image: image as string,
                 textImage: textImage as string
             };
+            const ocr_text = await OCRImage(textImage as string);
+            if (ocr_text && parseInt(ocr_text) > 1000) {
+                text.value = ocr_text;
+            } else {
+                text.value = 'Texto Inválido';
+            }
         } else {
             croppedItem.value = null;
+            text.value = '';
         }
     });
 

@@ -78,6 +78,19 @@ export async function getRectsFromImage(imageData: string, rects: Rect[], out_mi
     output.push(blob)
     
   }
-  
+
   return output
+}
+
+export async function OCRImage(imageData: string): Promise<string> {
+  if (!import.meta.client) {
+    return '';
+  }
+
+  const { createWorker } = await import('tesseract.js');
+  const worker = await createWorker();
+  const { data: { text } } = await worker.recognize(imageData);
+  await worker.terminate();
+  
+  return text;
 }
