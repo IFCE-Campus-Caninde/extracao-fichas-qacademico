@@ -3,4 +3,5 @@ onlyBuiltDependencies:
   - '@tailwindcss/oxide'
   - canvas
   - esbuild
+  - tesseract.js
   - unrs-resolver

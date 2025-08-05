@@ -1,5 +1,9 @@
 <template>
-  <div class="bg-surface-50 dark:bg-surface-950 min-h-screen p-8 flex flex-col gap-6">
-    <NuxtPage />
+  <div class="flex flex-col h-screen">
+    <AppHeader />
+    <div class="flex-1">
+      <NuxtPage />
+    </div>
+    <AppFooter />
   </div>
 </template>

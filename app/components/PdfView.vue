@@ -21,12 +21,17 @@
                 </Panel>
             </div>
             <div class="flex-1 flex flex-col gap-4">
+                
                 <Panel header="Configurações de Corte">
                     <CutProperties v-model="cut_config" />
+                </Panel>
+                <Panel header="Processar Imagens">
+                    <DownloadFiles :pdf-pages="pdfPages" :cut-rects="cutRects" />
                 </Panel>
                 <Panel header="Preview">
                     <PreviewCut :pdf-pages="pdfPages" :cut-rects="cutRectsDebounced" :loading="cutsLoading" />
                 </Panel>
+                
             </div>
         </div>
     </div>

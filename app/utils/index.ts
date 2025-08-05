@@ -15,7 +15,7 @@ export async function convertPdfToImages(pdfBuffer: Uint8Array, dpi: number = 30
   }
 
   /* @vite-ignore */
-  const pdfjsLib = await import(pdfjsSrc);
+  const pdfjsLib = await import(pdfjsSrc /* @vite-ignore */);
   pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
   const images: PDFPages = [];
@@ -82,7 +82,7 @@ export async function getRectsFromImage(imageData: string, rects: Rect[], out_mi
   return output
 }
 
-export async function OCRImage(imageData: string): Promise<string> {
+export async function OCRImage(imageData: string|Blob): Promise<string> {
   if (!import.meta.client) {
     return '';
   }
@@ -93,4 +93,88 @@ export async function OCRImage(imageData: string): Promise<string> {
   await worker.terminate();
   
   return text;
+}
+
+export function isValidNumber(text: string): boolean {
+  const number = parseInt(text, 10);
+  return !isNaN(number) && number > 1000; // Exemplo de validação: número deve ser maior que 1000
+}
+
+export type ProcessedImage = {
+  data: Blob;
+  name: string;
+}
+
+export type ProgressState = {
+  current: number;
+  total: number;
+  message: string;
+}
+
+export async function processPages(pages: PDFPages, cutRects: CutRects, progress_state?: Ref<ProgressState>): Promise<ProcessedImage[]> {
+  if (!import.meta.client) {
+    return [];
+  }
+  const processedImages: ProcessedImage[] = [];
+  if (progress_state) {
+    progress_state.value = {
+      current: 0,
+      total: pages.length * cutRects.images.length,
+      message: 'Iniciando processamento...'
+    }
+  }
+  for (let i = 0; i < pages.length; i++) {
+    if (progress_state) {
+      progress_state.value = {
+        current: i * cutRects.images.length,
+        total: pages.length * cutRects.images.length,
+        message: `Processando página ${i + 1} de ${pages.length}`
+      }
+    }
+    const page = pages[i]!;
+    const all_cropped = await getRectsFromImage(page, [...cutRects.images, ...cutRects.texts], 'image/jpeg');
+    const images = all_cropped.slice(0, cutRects.images.length);
+    const texts = all_cropped.slice(cutRects.images.length);
+    for (let j = 0; j < images.length; j++) {
+      if (progress_state) {
+        progress_state.value = {
+          current: i * cutRects.images.length + j,
+          total: pages.length * cutRects.images.length,
+          message: `Processando imagem ${j + 1} de ${images.length} na página ${i + 1}`
+        }
+      }
+      const image = images[j]!;
+      const textImage = texts[j]!;
+      const ocrText = await OCRImage(textImage);
+      if (isValidNumber(ocrText)) {
+        processedImages.push({
+          data: image,
+          name: ocrText + '.jpg'
+        });
+      } 
+    }
+  }
+  return processedImages;
+}
+
+export async function createZipFromProcessedImages(processedImages: ProcessedImage[]): Promise<Blob> {
+  if (!import.meta.client) {
+    return new Blob();
+  }
+  return createZip(processedImages);
+}
+
+export async function createZip(files: { name: string; data: Blob }[]): Promise<Blob> {
+  if (!import.meta.client) {
+    return Promise.resolve(new Blob());
+  }
+
+  const { default: JSZip } = await import('jszip');
+  const zip = new JSZip();
+
+  files.forEach(file => {
+    zip.file(file.name, file.data);
+  });
+
+  return zip.generateAsync({ type: 'blob' });
 }
