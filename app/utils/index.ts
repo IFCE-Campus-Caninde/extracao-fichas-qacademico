@@ -149,7 +149,7 @@ export async function processPages(pages: PDFPages, cutRects: CutRects, progress
       if (isValidNumber(ocrText)) {
         processedImages.push({
           data: image,
-          name: ocrText + '.jpg'
+          name: Number.parseInt(ocrText) + '.jpg'
         });
       } 
     }
