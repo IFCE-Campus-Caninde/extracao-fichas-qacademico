@@ -1,12 +1,12 @@
 <template>
-    <div class="container mx-auto px-2 sm:px-4 py-6 flex flex-col gap-4">
+    <div class="container mx-auto px-2 sm:px-4 py-6 flex flex-col gap-4 w-full items-center">
         <div>
             <LoadPDF @loaded="onPdfLoad"/>
         </div>
-        <div v-if="pdf_data && !pdf_pages">
+        <div v-if="pdf_data && !pdf_pages" class="flex justify-center items-center h-64">
             <ProgressSpinner/>
         </div>
-        <div v-else-if="pdf_pages">
+        <div v-else-if="pdf_pages" class="w-full">
             <ClientOnly>
             <PdfView :pdf-pages="pdf_pages"/>
             </ClientOnly>

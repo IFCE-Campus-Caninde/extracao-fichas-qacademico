@@ -1,34 +1,48 @@
 <template>
     <div>
-        Páginas: {{ pdfPages.length }}
         <div class="flex flex-row gap-4">
             <div class="flex-1">
-                <div class="relative w-full max-w-[800px] mx-auto">
-                    <img
-                        ref="img"
-                        :src="pdfPages[page]"
-                        class="w-full h-auto block"
-                        @load="setupCanvas"
-                    />
-                    <canvas
-                        ref="canvas"
-                        class="absolute top-0 left-0 w-full h-full pointer-events-none"
-                    ></canvas>
-                </div>
+                <Panel header="Visualização do PDF">
+                    <div class="w-full mb-4">
+                        <Paginator :rows="1" :total-records="pdfPages.length" @page="onPageChange"></Paginator>
+                    </div>
+                    <div class="relative w-full max-w-[800px] mx-auto">
+                        <img
+                            ref="img"
+                            :src="pdfPages[page]"
+                            class="w-full h-auto block"
+                            @load="setupCanvas"
+                        />
+                        <canvas
+                            ref="canvas"
+                            class="absolute top-0 left-0 w-full h-full pointer-events-none"
+                        ></canvas>
+                    </div>
+                </Panel>
             </div>
-            <div class="flex-1">
-                <CutProperties v-model="cut_config" />
+            <div class="flex-1 flex flex-col gap-4">
+                <Panel header="Configurações de Corte">
+                    <CutProperties v-model="cut_config" />
+                </Panel>
+                <Panel header="Preview">
+                    <PreviewCut :pdf-pages="pdfPages" :cut-rects="cutRectsDebounced" :loading="cutsLoading" />
+                </Panel>
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import type { PageState } from 'primevue';
+
+    import { refDebounced } from '@vueuse/core'
     const CANVAS_RATIO = 0.25
 
-    const { pdfPages} = defineProps<{
+    const props = defineProps<{
         pdfPages: PDFPages;
     }>();
+
+    const { pdfPages } = toRefs(props);
 
     const page = ref(0);
     const canvas = ref<HTMLCanvasElement | null>(null);
@@ -37,12 +51,29 @@
     const cut_config = defineModel<CutConfig>({
         default: () => ({...DEFAULT_CUT_CONFIG})
     });
+    const cutRects = ref<CutRects>({ images: [], texts: [] });
+    const cutRectsDebounced = refDebounced(cutRects, 1000)
+    const cutsLoading = computed(() => {
+        return cutRects.value !== cutRectsDebounced.value;
+    });
 
     watch(cut_config, (newConfig) => {
         if (newConfig) {
             drawCuts();
         }
     });
+
+    watch (pdfPages, (newPages) => {
+        if (newPages.length > 0) {
+            page.value = 0; // Reset to first page when new pages are loaded
+            canvas_loaded.value = false; // Reset canvas loaded state
+        }
+    });
+
+    const onPageChange = (event: PageState) => {
+        page.value = event.page;
+        canvas_loaded.value = false; // Reset canvas loaded state when changing page
+    };
 
     const setupCanvas = () => {
         if (canvas.value === null || img.value === null) {
@@ -124,27 +155,57 @@
         ctx.lineTo(width, height * nextY);
         ctx.stroke();
         
-        
-
         let x = startX;
         let y = startY;
         let i = 0;
 
+        const text_start = cut_config.value.textStart
+        const text_size = cut_config.value.textHeight
+
+        const images_rects: Rect[] = [];
+        const text_rects: Rect[] = [];
+
         while (true) {
+            const image_rect: Rect = {
+                x: (width * x) / CANVAS_RATIO,
+                y: (height * y) / CANVAS_RATIO,
+                width: (width * cut_width) / CANVAS_RATIO,
+                height: (height * cut_height) / CANVAS_RATIO
+            }
+            images_rects.push(image_rect);
             ctx.strokeStyle = 'orange';
             ctx.strokeRect(
-                width * x,
-                height * y,
-                width * cut_width,
-                height * cut_height
+                image_rect.x * CANVAS_RATIO,
+                image_rect.y * CANVAS_RATIO,
+                image_rect.width * CANVAS_RATIO,
+                image_rect.height * CANVAS_RATIO
             );
             ctx.fillStyle = 'rgba(255, 165, 0, 0.3)';
             ctx.fillRect(
-                width * x,
-                height * y,
-                width * cut_width,
-                height * cut_height
+                image_rect.x * CANVAS_RATIO,
+                image_rect.y * CANVAS_RATIO,
+                image_rect.width * CANVAS_RATIO,
+                image_rect.height * CANVAS_RATIO
             );
+
+            const textY = text_start * cut_gap_y
+            const textWeight = text_size * cut_gap_y;
+
+            const text_rect: Rect = {
+                x: (width * x) / CANVAS_RATIO,
+                y: (height * (y + cut_height + textY)) / CANVAS_RATIO,
+                width: (width * cut_width) / CANVAS_RATIO,
+                height: (height * textWeight) / CANVAS_RATIO
+            }
+            text_rects.push(text_rect);
+            ctx.strokeStyle = 'yellow';
+            ctx.strokeRect(
+                text_rect.x * CANVAS_RATIO,
+                text_rect.y * CANVAS_RATIO,
+                text_rect.width * CANVAS_RATIO,
+                text_rect.height * CANVAS_RATIO
+            );
+
             x += cut_width + cut_gap_x;
             if (x + cut_width + cut_gap_x > 1) {
                 x = startX;
@@ -154,12 +215,14 @@
                 break;
             }
             i += 1;
-            if (i > 1000) {
-                console.warn('Loop exceeded 1000 iterations, breaking to prevent infinite loop');
+            if (i > 100) {
+                console.warn('Loop exceeded 100 iterations, breaking to prevent infinite loop');
                 break;
             }
         }
+        cutRects.value = { images: images_rects, texts: text_rects };
     }
+
 </script>
 
 <style scoped>

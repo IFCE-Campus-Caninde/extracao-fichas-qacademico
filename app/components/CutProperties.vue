@@ -2,27 +2,35 @@
   <div>
     <div>
       <label>Margem Esquerda:</label>
-      <Slider v-model="local.startX" :step="1" :max="200" class="w-full" />
+      <Slider v-model="local.startX" :step="1" :max="200" :min="10" class="w-full" />
     </div>
     <div>
       <label>Margem Superior:</label>
-      <Slider v-model="local.startY" :step="1" :max="200" class="w-full" />
+      <Slider v-model="local.startY" :step="1" :max="200" :min="10" class="w-full" />
     </div>
     <div>
       <label>Largura:</label>
-      <Slider v-model="local.width" :step="1" :max="200" class="w-full" />
+      <Slider v-model="local.width" :step="1" :max="200" :min="10" class="w-full" />
     </div>
     <div>
       <label>Altura:</label>
-      <Slider v-model="local.height" :step="1" :max="200" class="w-full" />
+      <Slider v-model="local.height" :step="1" :max="200" :min="10" class="w-full" />
     </div>
     <div>
       <label>Espaçamento Horizontal:</label>
-      <Slider v-model="local.gapX" :step="1" :max="50" class="w-full" />
+      <Slider v-model="local.gapX" :step="1" :max="50" :min="10" class="w-full" />
     </div>
     <div>
       <label>Espaçamento Vertical:</label>
-      <Slider v-model="local.gapY" :step="1" :max="100" class="w-full" />
+      <Slider v-model="local.gapY" :step="1" :max="100" :min="10" class="w-full" />
+    </div>
+    <div>
+      <label>Início da Legenda:</label>
+      <Slider v-model="local.textStart" :step="1" :max="500" :min="10" class="w-full" />
+    </div>
+    <div>
+      <label>Tamanho da Legenda:</label>
+      <Slider v-model="local.textHeight" :step="1" :max="500" :min="10" class="w-full" />
     </div>
   </div>
 </template>
