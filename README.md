@@ -3,6 +3,8 @@
 
 Aplicação web para extrair fotos e legendas de fichas em PDF geradas pelo sistema Q-Acadêmico, desenvolvida para uso no IFCE - Campus Canindé. Todo o processamento é feito localmente no navegador, garantindo privacidade e segurança dos dados.
 
+A última versão do projeto pode ser acessada em: [https://ifce-campus-caninde.github.io/extracao-fichas-qacademico/](https://ifce-campus-caninde.github.io/extracao-fichas-qacademico/)
+
 ## Objetivo
 
 Facilitar a extração em lote de fotos e legendas de fichas estudantis em PDF, permitindo o recorte automático das imagens e exportação em arquivos ZIP, sem necessidade de envio de dados para servidores externos.
