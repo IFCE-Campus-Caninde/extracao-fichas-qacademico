@@ -22,6 +22,7 @@ Facilitar a extração em lote de fotos e legendas de fichas estudantis em PDF, 
 - [PrimeVue](https://www.primefaces.org/primevue/) (componentes UI)
 - [TailwindCSS](https://tailwindcss.com/) (estilização)
 - [pdfjs-dist](https://github.com/mozilla/pdfjs-dist) (renderização de PDFs)
+- [tesseract.js](https://github.com/naptha/tesseract.js) (OCR das legendas)
 - TypeScript
 
 ## Como Usar
