@@ -1,75 +1,64 @@
-# Nuxt Minimal Starter
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+# Extrator de Fotos de Fichas do Q-Acadêmico
 
-## Setup
+Aplicação web para extrair fotos e legendas de fichas em PDF geradas pelo sistema Q-Acadêmico, desenvolvida para uso no IFCE - Campus Canindé. Todo o processamento é feito localmente no navegador, garantindo privacidade e segurança dos dados.
 
-Make sure to install dependencies:
+## Objetivo
 
-```bash
-# npm
-npm install
+Facilitar a extração em lote de fotos e legendas de fichas estudantis em PDF, permitindo o recorte automático das imagens e exportação em arquivos ZIP, sem necessidade de envio de dados para servidores externos.
 
-# pnpm
-pnpm install
+## Funcionalidades
 
-# yarn
-yarn install
+- Carregamento de arquivos PDF de fichas do Q-Acadêmico
+- Configuração visual dos parâmetros de corte (margens, largura, altura, espaçamentos, área da legenda)
+- Visualização e ajuste em tempo real dos cortes sobre as páginas do PDF
+- Preview das imagens e legendas extraídas
+- Processamento local das imagens e geração de arquivos ZIP para download
+- Interface responsiva e suporte a modo escuro
 
-# bun
-bun install
-```
+## Tecnologias Utilizadas
 
-## Development Server
+- [Nuxt 3](https://nuxt.com/) (Vue 3)
+- [PrimeVue](https://www.primefaces.org/primevue/) (componentes UI)
+- [TailwindCSS](https://tailwindcss.com/) (estilização)
+- [pdfjs-dist](https://github.com/mozilla/pdfjs-dist) (renderização de PDFs)
+- TypeScript
 
-Start the development server on `http://localhost:3000`:
+## Como Usar
 
-```bash
-# npm
-npm run dev
+1. Instale as dependências:
 
-# pnpm
-pnpm dev
+   ```bash
+   pnpm install
+   # ou npm install, yarn install, conforme sua preferência
+   ```
 
-# yarn
-yarn dev
+2. Inicie o servidor de desenvolvimento:
 
-# bun
-bun run dev
-```
+   ```bash
+   pnpm dev
+   # ou npm run dev, yarn dev
+   ```
 
-## Production
+3. Acesse `http://localhost:3000` no navegador.
 
-Build the application for production:
+4. Siga as instruções na tela:
+   - Carregue o PDF com as fichas
+   - Ajuste os sliders para configurar os cortes das fotos e legendas
+   - Visualize o preview
+   - Clique em "Processar" e faça o download do arquivo ZIP gerado
 
-```bash
-# npm
-npm run build
+## Estrutura do Projeto
 
-# pnpm
-pnpm build
+- `app/pages/index.vue`: Página principal e fluxo do usuário
+- `app/components/`: Componentes reutilizáveis (upload, preview, corte, download, etc.)
+- `app/utils/`: Funções utilitárias e tipos TypeScript
+- `nuxt.config.ts`: Configuração do Nuxt, PrimeVue e TailwindCSS
 
-# yarn
-yarn build
+## Observações
 
-# bun
-bun run build
-```
+- Nenhum dado é enviado para servidores externos. Todo o processamento ocorre no navegador do usuário.
+- O projeto foi desenvolvido para atender demandas do IFCE - Campus Canindé, mas pode ser adaptado para outros contextos.
 
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+---
+Feito com ❤️ por Carlos Alberto Castelo @ IFCE Campus Canindé
