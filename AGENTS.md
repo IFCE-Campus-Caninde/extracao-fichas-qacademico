@@ -40,17 +40,19 @@
 app/
 ├── app.vue                    # Root Vue component
 ├── assets/css/main.css        # Tailwind CSS entry
+├── composables/
+│   └── useCutProfiles.ts      # Profile management composable (localStorage persistence)
 ├── components/
 │   ├── AppHeader.vue           # Header with title and dark mode toggle
 │   ├── AppFooter.vue           # Footer with credits
-│   ├── CutProperties.vue       # Sliders for cut parameter configuration
+│   ├── CutProperties.vue       # Sliders + profile dropdown for cut configuration
 │   ├── DarkModeToggler.vue     # Dark mode toggle button
 │   ├── DownloadFiles.vue       # Process button and ZIP download
 │   ├── LoadPDF.vue             # PDF file upload component
 │   ├── PdfView.vue             # PDF preview with canvas overlay for cut guides
 │   └── PreviewCut.vue          # Preview of cropped image and OCR text
 ├── pages/
-│   └── index.vue               # Main page (instructions + PDF loading)
+│   └── index.vue               # Main page (instructions + PDF loading + profile state)
 └── utils/
     ├── index.ts                # Utility functions (PDF conversion, OCR, ZIP)
     └── types.ts                # TypeScript type definitions and defaults
@@ -83,9 +85,12 @@ Deployment is automatic via GitHub Actions on push to `main` (GitHub Pages).
 ### TypeScript
 
 - All types are defined in `app/utils/types.ts`
-- Key types: `CutConfig`, `Rect`, `CutRects`, `PDFPages`
+- Key types: `CutConfig`, `CutProfile`, `Rect`, `CutRects`, `PDFPages`
 - Cut configuration values are **normalized** (0–1 range, proportions of page dimensions) — never absolute pixel values
 - The `DEFAULT_CUT_CONFIG` constant provides sensible defaults
+- The `DEFAULT_PROFILE_NAME` constant is `'Q-Acadêmico'` — the built-in default profile
+- The `DEFAULT_PROFILES` array contains the immutable built-in profiles (`Q-Acadêmico` and `SUAP`)
+- The `DEFAULT_PROFILE_NAMES` array lists all default profile names (used to prevent modification/deletion of built-in profiles)
 
 ### Client-Side Only
 
@@ -123,9 +128,8 @@ Deployment is automatic via GitHub Actions on push to `main` (GitHub Pages).
 
 ### Correct examples
 
-- "Margem Esquerda" (not "Margem Esquerda" missing the accent — always use `á`, `é`, `í`, `ó`, `ú`, `ã`, `õ`, `â`, `ê`, `ô`, `ç`)
+- "Máquina" (not "Maquina" missing the accent — always use `á`, `é`, `í`, `ó`, `ú`, `ã`, `õ`, `â`, `ê`, `ô`, `ç`)
 - "Espaçamento Horizontal" (not "Espacamento Horizontal")
-- "Tamanho da Legenda" (not "Tamanho da Legenda" missing accents)
 - "Nenhuma imagem válida encontrada" (not "valida" — `á` not `a`)
 - "Processadas X imagens"
 - "Carregar PDF"
@@ -168,6 +172,8 @@ Deployment is automatic via GitHub Actions on push to `main` (GitHub Pages).
 3. **OCR for naming** — Tesseract.js reads student registration numbers from caption areas; images are named `${parseInt(ocrText)}.jpg`
 4. **Validation** — `isValidNumber()` checks that OCR text parses to a number > 1000 (typical Brazilian student registration IDs)
 5. **PrimeVue locale** — uses `primelocale/pt-BR.json` for localized component labels
+6. **Profile system** — cut configurations are managed via named profiles stored in localStorage; the default "Q-Acadêmico" profile is immutable; custom profiles can be saved/deleted by the user
+7. **Config persistence** — the selected profile and custom profiles persist across sessions via localStorage; cut config is NOT reset when a new PDF is loaded
 
 ---
 
@@ -180,6 +186,20 @@ Deployment is automatic via GitHub Actions on push to `main` (GitHub Pages).
 3. Add a slider in `CutProperties.vue` using PrimeVue `Slider` component
 4. Update `calculateCutRects()` in `app/utils/index.ts` to use the new parameter
 5. Update `PdfView.vue` overlay rendering if the parameter affects visual guides
+
+### Working with the profile system
+
+- The `useCutProfiles()` composable (`app/composables/useCutProfiles.ts`) manages profile state and localStorage persistence
+- It is provided via `provide(PROFILE_INJECTION_KEY, ...)` in `index.vue` and injected in `CutProperties.vue`
+- Default profiles "Q-Acadêmico" and "SUAP" are immutable — cannot be renamed, modified, or deleted
+- Custom profiles are stored in localStorage under the key `'cut-profiles'`
+- When a profile is selected, `cut_config` in `index.vue` is updated to match the profile's config
+- When sliders are modified, the dropdown shows "Personalizado" and action buttons appear contextually:
+  - **Salvar** appears when the current config differs from the selected profile
+  - **Renomear** and **Excluir** appear only for custom (non-default) profiles
+- The `isModified` computed uses `JSON.stringify` with rounding to handle floating-point precision
+- `CutProperties.vue` uses `v-for` with a `sliderConfigs` array to render sliders with `InputNumber` fields
+- Slider values are stored as integers (1000× normalized) and converted via `multiplyObject`
 
 ### Adding a new component
 
