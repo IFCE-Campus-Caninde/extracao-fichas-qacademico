@@ -66,24 +66,24 @@
         <div class="flex items-center gap-3">
           <Slider
             :model-value="local[s.key]"
-            :step="s.step"
-            :max="s.max"
-            :min="s.min"
+            :step="1"
+            :max="s.sliderMax"
+            :min="s.sliderMin"
             class="flex-1 min-w-0"
-            @update:model-value="local[s.key] = $event"
+            @update:model-value="onSliderInput(s.key, $event)"
           />
           <InputNumber
-            :model-value="local[s.key]"
+            :model-value="local[s.key] / 1000"
             mode="decimal"
-            :step="s.step"
+            :step="0.001"
             :min="s.min"
             :max="s.max"
             :min-fraction-digits="3"
             :max-fraction-digits="3"
             :use-grouping="false"
             :show-buttons="false"
-            class="w-20"
-            @update:model-value="updateLocal(s.key, $event)"
+            :input-style="{ width: '5rem' }"
+            @update:model-value="onNumberInput(s.key, $event)"
           />
         </div>
       </div>
@@ -227,91 +227,154 @@ const {
   isDefaultProfile
 } = inject(PROFILE_INJECTION_KEY)!
 
-// Slider configuration — all values are normalized (0–1 range)
+// Slider config: integer ranges for reliable slider interaction,
+// normalized ranges for InputNumber display
 const sliderConfigs: {
   key: keyof CutConfig
   label: string
   min: number
   max: number
-  step: number
+  sliderMin: number
+  sliderMax: number
 }[] = [
-  { key: 'startX', label: 'Margem Esquerda', min: 0.01, max: 0.2, step: 0.001 },
-  { key: 'startY', label: 'Margem Superior', min: 0.01, max: 0.2, step: 0.001 },
-  { key: 'width', label: 'Largura', min: 0.01, max: 0.2, step: 0.001 },
-  { key: 'height', label: 'Altura', min: 0.01, max: 0.2, step: 0.001 },
+  {
+    key: 'startX',
+    label: 'Margem Esquerda',
+    min: 0.01,
+    max: 0.2,
+    sliderMin: 10,
+    sliderMax: 200
+  },
+  {
+    key: 'startY',
+    label: 'Margem Superior',
+    min: 0.01,
+    max: 0.2,
+    sliderMin: 10,
+    sliderMax: 200
+  },
+  {
+    key: 'width',
+    label: 'Largura',
+    min: 0.01,
+    max: 0.2,
+    sliderMin: 10,
+    sliderMax: 200
+  },
+  {
+    key: 'height',
+    label: 'Altura',
+    min: 0.01,
+    max: 0.2,
+    sliderMin: 10,
+    sliderMax: 200
+  },
   {
     key: 'gapX',
     label: 'Espaçamento Horizontal',
     min: 0.01,
     max: 0.05,
-    step: 0.001
+    sliderMin: 10,
+    sliderMax: 50
   },
   {
     key: 'gapY',
     label: 'Espaçamento Vertical',
     min: 0.01,
     max: 0.1,
-    step: 0.001
+    sliderMin: 10,
+    sliderMax: 100
   },
   {
     key: 'textStart',
     label: 'Início da Legenda',
     min: 0.01,
     max: 0.5,
-    step: 0.001
+    sliderMin: 10,
+    sliderMax: 500
   },
   {
     key: 'textHeight',
     label: 'Tamanho da Legenda',
     min: 0.01,
     max: 0.5,
-    step: 0.001
+    sliderMin: 10,
+    sliderMax: 500
   }
 ]
 
-// Local reactive copy of the model (no scaling — values are normalized 0–1)
-const local = reactive<CutConfig>({ ...model.value })
+// Local state: integer values (×1000) for reliable slider interaction
+const local = reactive<CutConfig>(
+  Object.fromEntries(
+    Object.entries(model.value).map(([key, value]) => [
+      key,
+      Math.round(value * 1000)
+    ])
+  ) as CutConfig
+)
 
-// Guard to prevent circular updates between local ↔ model
-let syncingFromModel = false
+// Convert local (integer) → normalized model
+function localToModel(): CutConfig {
+  return Object.fromEntries(
+    Object.entries(local).map(([key, value]) => [key, (value as number) / 1000])
+  ) as CutConfig
+}
+
+// Convert normalized model → local (integer)
+function modelToLocal(modelVal: CutConfig): CutConfig {
+  return Object.fromEntries(
+    Object.entries(modelVal).map(([key, value]) => [
+      key,
+      Math.round((value as number) * 1000)
+    ])
+  ) as CutConfig
+}
+
+// Slider input: integer value → update local
+function onSliderInput(key: keyof CutConfig, value: number) {
+  local[key] = value
+}
+
+// InputNumber input: normalized value → convert to integer → update local
+function onNumberInput(key: keyof CutConfig, value: number | null) {
+  if (value !== null && value !== undefined) {
+    local[key] = Math.round(value * 1000)
+  }
+}
 
 // Sync local → model (user changed a slider/input)
+// Use watchEffect to avoid circular updates — only push to model when local actually changes
+let isSyncing = false
+
 watch(
-  () => local,
+  () => ({ ...local }),
   () => {
-    if (!syncingFromModel) {
-      model.value = { ...local }
+    if (!isSyncing) {
+      model.value = localToModel()
     }
-  },
-  { deep: true }
+  }
 )
 
 // Sync model → local (profile switch from parent)
 watch(model, (newModel) => {
   if (newModel) {
-    syncingFromModel = true
-    for (const key of Object.keys(newModel) as (keyof CutConfig)[]) {
-      local[key] = newModel[key]
+    isSyncing = true
+    const converted = modelToLocal(newModel)
+    for (const key of Object.keys(converted) as (keyof CutConfig)[]) {
+      local[key] = converted[key]
     }
     nextTick(() => {
-      syncingFromModel = false
+      isSyncing = false
     })
   }
 })
-
-// Handle InputNumber null values (field being edited)
-function updateLocal(key: keyof CutConfig, value: number | null) {
-  if (value !== null && value !== undefined) {
-    local[key] = value
-  }
-}
 
 // Modified indicator: compare current config with selected profile's config
 function roundConfig(config: CutConfig): CutConfig {
   return Object.fromEntries(
     Object.entries(config).map(([key, value]) => [
       key,
-      Math.round(value * 1e6) / 1e6
+      Math.round((value as number) * 1e6) / 1e6
     ])
   ) as CutConfig
 }
