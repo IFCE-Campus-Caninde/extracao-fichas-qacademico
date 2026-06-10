@@ -24,33 +24,36 @@
           <Button
             v-if="showSave"
             v-tooltip.top="'Salvar perfil'"
-            icon="pi pi-save"
             severity="secondary"
             text
             size="small"
             aria-label="Salvar perfil"
             @click="openSaveDialog"
-          />
+          >
+            <Icon name="material-symbols:save" class="text-xl" />
+          </Button>
           <Button
             v-if="showRename"
             v-tooltip.top="'Renomear perfil'"
-            icon="pi pi-pencil"
             severity="secondary"
             text
             size="small"
             aria-label="Renomear perfil"
             @click="openRenameDialog"
-          />
+          >
+            <Icon name="material-symbols:edit" class="text-xl" />
+          </Button>
           <Button
             v-if="showDelete"
             v-tooltip.top="'Excluir perfil'"
-            icon="pi pi-trash"
             severity="danger"
             text
             size="small"
             aria-label="Excluir perfil"
             @click="onDeleteProfile"
-          />
+          >
+            <Icon name="material-symbols:delete" class="text-xl" />
+          </Button>
         </div>
       </div>
     </div>
